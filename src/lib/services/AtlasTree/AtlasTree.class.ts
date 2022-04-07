@@ -1,21 +1,20 @@
-import { GGGAtlasPassiveTree } from "./atlas-tree-ggg.interface";
-import { InternalPassiveTree } from "./atlas-tree-internal.interface";
-import { isSkillNode } from "./atlas-tree.typeguards";
+import { GGGAtlasTree, InternalAtlasTree } from "./AtlasTree.interface";
+import { isSkillNode } from "./AtlasTree.typeguards";
 
-export class AtlasPassiveTreeService {
-  data: GGGAtlasPassiveTree.Data;
-  skillSprites: GGGAtlasPassiveTree.SkillSprites;
-  groupMap: Record<string, GGGAtlasPassiveTree.Group> = {};
-  orbitDelta: InternalPassiveTree.OrbitDelta[][] = [];
-  nodeMap: Record<string, InternalPassiveTree.Node> = {};
-  connectionMap: Record<string, InternalPassiveTree.Connection[]> = {};
+export class AtlasTree {
+  data: GGGAtlasTree.Data;
+  skillSprites: GGGAtlasTree.SkillSprites;
+  groupMap: Record<string, GGGAtlasTree.Group> = {};
+  orbitDelta: InternalAtlasTree.OrbitDelta[][] = [];
+  nodeMap: Record<string, InternalAtlasTree.Node> = {};
+  connectionMap: Record<string, InternalAtlasTree.Connection[]> = {};
 
-  constructor(data: GGGAtlasPassiveTree.Data) {
+  constructor(data: GGGAtlasTree.Data) {
     this.data = data;
     this.skillSprites = data.skillSprites;
   }
 
-  computeOrbitDelta(): InternalPassiveTree.OrbitDelta[][] {
+  computeOrbitDelta(): InternalAtlasTree.OrbitDelta[][] {
     const { skillsPerOrbit, orbitRadii } = this.data.constants;
 
     return skillsPerOrbit.map((nodesPerOrbit, orbitIndex) => {
@@ -25,13 +24,13 @@ export class AtlasPassiveTreeService {
 
       for (let i = 0; i < nodeAngle.length; i++) {
         const [x, y] = [Math.sin(nodeAngle[i]) * radius, Math.cos(nodeAngle[i]) * radius];
-        deltaCords.push({ x, y: -y }); // y negative is important,cuz sprite world y is negative
+        deltaCords.push({ x, y: -y, angle: nodeAngle[i] }); // y negative is important,cuz sprite world y is negative
       }
       return deltaCords;
     });
   }
 
-  parseGroups(): Record<number, GGGAtlasPassiveTree.Group> {
+  parseGroups(): Record<number, GGGAtlasTree.Group> {
     const groups = Object.keys(this.data.groups).map((groupId) => {
       const group = this.data.groups[groupId];
 
@@ -56,7 +55,7 @@ export class AtlasPassiveTreeService {
     );
   }
 
-  mapToInternalNode(node: GGGAtlasPassiveTree.Node, nodeId: string): InternalPassiveTree.Node {
+  mapToInternalNode(node: GGGAtlasTree.Node, nodeId: string): InternalAtlasTree.Node {
     return {
       ...node,
       nodeId,
@@ -67,8 +66,8 @@ export class AtlasPassiveTreeService {
     };
   }
 
-  handleNode(node: GGGAtlasPassiveTree.Node, nodeId: string) {
-    let result: InternalPassiveTree.Node = this.mapToInternalNode(node, nodeId);
+  handleNode(node: GGGAtlasTree.Node, nodeId: string) {
+    let result: InternalAtlasTree.Node = this.mapToInternalNode(node, nodeId);
     if (isSkillNode(node) && node.group) {
       if (node.orbit !== undefined && node.orbitIndex !== undefined) {
         const { x, y, backgroundOverride } = this.groupMap[node.group];
@@ -76,6 +75,7 @@ export class AtlasPassiveTreeService {
         result = {
           ...result,
           backgroundOverride,
+          angle: orbitDelta.angle,
           x: x + orbitDelta.x,
           y: y + orbitDelta.y,
         };
@@ -85,7 +85,7 @@ export class AtlasPassiveTreeService {
     return result;
   }
 
-  parseNodes(): Record<string, InternalPassiveTree.Node> {
+  parseNodes(): Record<string, InternalAtlasTree.Node> {
     const nodes = Object.keys(this.data.nodes).map((nodeId) => {
       const node = this.data.nodes[nodeId];
 
@@ -100,8 +100,8 @@ export class AtlasPassiveTreeService {
     );
   }
 
-  parseConnections(): Record<string, InternalPassiveTree.Connection[]> {
-    let connections: InternalPassiveTree.Connection[] = [];
+  parseConnections(): Record<string, InternalAtlasTree.Connection[]> {
+    let connections: InternalAtlasTree.Connection[] = [];
     Object.keys(this.nodeMap).forEach((nodeOneId) => {
       const nodeOne = this.nodeMap[nodeOneId];
 
@@ -129,6 +129,7 @@ export class AtlasPassiveTreeService {
           fromNode,
           toNode,
           isCurved,
+          isSelected: false,
         });
       });
     });
@@ -143,7 +144,7 @@ export class AtlasPassiveTreeService {
     }, {});
   }
 
-  getData(): InternalPassiveTree.Data {
+  getData(): InternalAtlasTree.Data {
     this.orbitDelta = this.computeOrbitDelta();
     const constants = {
       orbitDelta: this.orbitDelta,

@@ -1,25 +1,24 @@
 import { Container, Sprite, TilingSprite } from "@inlet/react-pixi";
-import React, { FC, useEffect, useState } from "react";
-import { GGGAtlasPassiveTree } from "../../lib/services/AtlasPassiveTree/atlas-tree-ggg.interface";
-import { InternalPassiveTree } from "../../lib/services/AtlasPassiveTree/atlas-tree-internal.interface";
-import { isMasteryNode, isNotableNode, isRootNode } from "../../lib/services/AtlasPassiveTree/atlas-tree.typeguards";
+import React, { FC, useState } from "react";
+import { GGGAtlasTree, InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
+import { isMasteryNode, isNotableNode } from "../../lib/services/AtlasTree/AtlasTree.typeguards";
 
-interface TreeNodeInterface {
-  node: InternalPassiveTree.Node | InternalPassiveTree.NotableNode | InternalPassiveTree.MasteryNode;
-  skillSprites: GGGAtlasPassiveTree.SkillSprites;
+interface TreeNodeProps {
+  node: InternalAtlasTree.Node | InternalAtlasTree.NotableNode | InternalAtlasTree.MasteryNode;
+  skillSprites: GGGAtlasTree.SkillSprites;
   zoomLevel: number;
 }
 
-const TreeNode: FC<TreeNodeInterface> = ({ node, skillSprites, zoomLevel }) => {
+const TreeNode: FC<TreeNodeProps> = ({ node, skillSprites, zoomLevel }) => {
   // zoom level node type, active
   const [{ iconSrc, iconOutline }, setIcon] = useState<{
-    iconSrc: GGGAtlasPassiveTree.SkillSpriteCoords;
+    iconSrc: GGGAtlasTree.SkillSpriteCoords;
     iconOutline: string;
   }>(getIcon(node, skillSprites, zoomLevel));
 
   function getIcon(
-    node: InternalPassiveTree.Node | InternalPassiveTree.NotableNode | InternalPassiveTree.MasteryNode,
-    skillSprites: GGGAtlasPassiveTree.SkillSprites,
+    node: InternalAtlasTree.Node | InternalAtlasTree.NotableNode | InternalAtlasTree.MasteryNode,
+    skillSprites: GGGAtlasTree.SkillSprites,
     zoomLevel: number
   ) {
     let iconSrc;
@@ -59,17 +58,17 @@ const TreeNode: FC<TreeNodeInterface> = ({ node, skillSprites, zoomLevel }) => {
   return (
     <Container sortableChildren={true} x={node.x} y={node.y}>
       {isMasteryNode(node) ? (
-        <Sprite image={`/PSGroupBackground${0}.png`} anchor={0.5} scale={2.5} />
+        <Sprite zIndex={-1} image={`/PSGroupBackground${0}.png`} anchor={0.5} scale={2.5} />
       ) : (
-        <Sprite zIndex={100} image={iconOutline} anchor={0.5} scale={2.5} />
+        <Sprite zIndex={100} image={iconOutline} anchor={0.5} scale={2.4} />
       )}
       <TilingSprite
         image={`/${iconSrc.filename}`}
+        zIndex={10}
         interactive={true}
         click={(event) => console.log(node.name, node.icon, iconSrc.coords[`${node.icon}`], event.target)}
         anchor={0.5}
-        zIndex={10}
-        scale={2.75}
+        scale={2.8}
         width={iconSrc.coords[`${node.icon}`].w}
         height={iconSrc.coords[`${node.icon}`].h}
         tilePosition={{
