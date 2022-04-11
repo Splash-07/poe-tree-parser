@@ -2,18 +2,16 @@ import React from "react";
 import * as PIXI from "pixi.js";
 import { PixiComponent, useApp } from "@inlet/react-pixi";
 import { Viewport as PixiViewport } from "pixi-viewport";
+import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
 
 export interface ViewportProps {
-  width: number;
-  height: number;
   worldOptions: {
     minScale: number;
     maxScale: number;
+    posX: number;
+    posY: number;
   };
-  worldPosition: {
-    x: number;
-    y: number;
-  };
+  constants: InternalAtlasTree.Constants;
   children?: React.ReactNode;
 }
 
@@ -23,25 +21,37 @@ export interface PixiComponentViewportProps extends ViewportProps {
 
 const PixiComponentViewport = PixiComponent("Viewport", {
   create: (props: PixiComponentViewportProps) => {
+    const { worldOptions, app, constants } = props;
     const viewport = new PixiViewport({
-      screenWidth: props.width,
-      screenHeight: props.height,
-      worldWidth: props.width,
-      worldHeight: props.height,
-      ticker: props.app.ticker,
-      interaction: props.app.renderer.plugins.interaction,
+      screenWidth: window.innerWidth,
+      screenHeight: window.innerHeight,
+      worldWidth: Math.abs(constants.minX) + Math.abs(constants.maxX),
+      worldHeight: Math.abs(constants.minY) + Math.abs(constants.maxY),
+      ticker: app.ticker,
+      interaction: app.renderer.plugins.interaction,
     });
     // add world boundaries
     // change scale per scroll for 0.0863
+    const worldClampOption = {
+      left: -10000,
+      top: 10000,
+      right: 20000,
+      bottom: 20000,
+    };
+    const clampZoomOptions = {
+      minScale: worldOptions.minScale,
+      maxScale: worldOptions.maxScale,
+    };
     viewport
-      .animate({ time: 0, scale: props.worldOptions.minScale, position: props.worldPosition })
+      .animate({ time: 0, scale: worldOptions.minScale, position: { x: worldOptions.posX, y: worldOptions.posY } })
       .drag()
       .pinch()
       .wheel()
-      // [0.1246, 0.2109, 0.2972, 0.3835]
-      //   .clamp({ ...props.clampOptions })
-      .clampZoom(props.worldOptions);
-    viewport.on("clicked", () => console.log(viewport.scaled));
+      // [0.1246, 0.2109, 0.2972, 0.3835] 0.0863
+      .zoom(0.0863 * 100)
+      .clampZoom(clampZoomOptions)
+      .getVisibleBounds();
+    viewport.on("clicked", () => console.log(viewport.scaled), console.log(viewport.scaled));
     return viewport;
   },
 });

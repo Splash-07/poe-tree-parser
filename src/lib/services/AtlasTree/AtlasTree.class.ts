@@ -14,11 +14,37 @@ export class AtlasTree {
     this.skillSprites = data.skillSprites;
   }
 
+  getOrbitAngles(nodesInOrbit: number): number[] {
+    let orbitAngles = [];
+
+    if (nodesInOrbit === 16) {
+      // Every 30 and 45 degrees, per https://github.com/grindinggear/skilltree-export/blob/3.17.0/README.md
+      const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+      orbitAngles = [...angles];
+    } else if (nodesInOrbit == 40) {
+      // Every 10 and 45 degrees
+      const angles = [
+        0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140, 150, 160, 170, 180, 190, 200, 210, 220,
+        225, 230, 240, 250, 260, 270, 280, 290, 300, 310, 315, 320, 330, 340, 350,
+      ];
+      orbitAngles = [...angles];
+    } else {
+      // Uniformly spaced
+      for (let i = 0; i < nodesInOrbit; i++) {
+        orbitAngles.push((360 * i) / nodesInOrbit);
+      }
+    }
+    for (let i = 0; i < orbitAngles.length; i++) {
+      orbitAngles[i] = orbitAngles[i] * (Math.PI / 180);
+    }
+    return orbitAngles;
+  }
+
   computeOrbitDelta(): InternalAtlasTree.OrbitDelta[][] {
     const { skillsPerOrbit, orbitRadii } = this.data.constants;
 
     return skillsPerOrbit.map((nodesPerOrbit, orbitIndex) => {
-      const nodeAngle = this.calcOrbitAngles(nodesPerOrbit);
+      const nodeAngle = this.getOrbitAngles(nodesPerOrbit);
       const radius = orbitRadii[orbitIndex];
       const deltaCords = [];
 
@@ -55,9 +81,59 @@ export class AtlasTree {
     );
   }
 
+  parseNodeIcon(
+    node: GGGAtlasTree.Node,
+    skillSprites: GGGAtlasTree.SkillSprites,
+    zoomLevel: number
+  ): {
+    nodeIcon: InternalAtlasTree.NodeIcon;
+    outlineIcon?: InternalAtlasTree.OutlineIcon;
+    groupBackground?: string;
+  } {
+    const { icon } = node;
+    const iconType = "isMastery" in node ? "mastery" : "isNotable" in node ? "notable" : "normal";
+
+    const result = {
+      nodeIcon: {
+        active: {
+          filename: skillSprites[`${iconType}Active`][zoomLevel].filename,
+          cords: skillSprites[`${iconType}Active`][zoomLevel].coords[`${icon}`],
+        },
+        inactive: {
+          filename: skillSprites[`${iconType}Inactive`][zoomLevel].filename,
+          cords: skillSprites[`${iconType}Inactive`][zoomLevel].coords[`${icon}`],
+        },
+      },
+      outlineIcon: {
+        active: `${iconType === "notable" ? "NotableFrameAllocated" : "PSSkillFrameActive"}.png`,
+        inactive: `${iconType === "notable" ? "NotableFrameUnallocated" : "PSSkillFrame"}.png`,
+      },
+    };
+
+    if (iconType === "mastery") {
+      const { nodeIcon } = result;
+      const { orbits, backgroundOverride } = this.groupMap[node.group];
+      if (orbits.length > 1) {
+        const filteredOrbits = orbits.filter((orbit) => orbit <= 3);
+        const lastOrbit = filteredOrbits[filteredOrbits.length - 1];
+        const bgId = lastOrbit === backgroundOverride ? lastOrbit : lastOrbit - backgroundOverride;
+        return {
+          nodeIcon,
+          groupBackground: `PSGroupBackground${bgId}.png`,
+        };
+      }
+    }
+
+    return result;
+  }
   mapToInternalNode(node: GGGAtlasTree.Node, nodeId: string): InternalAtlasTree.Node {
+    const { nodeIcon, outlineIcon, groupBackground } = this.parseNodeIcon(node, this.skillSprites, 3);
+    const { icon, ...restNode } = node;
     return {
-      ...node,
+      ...restNode,
+      nodeIcon,
+      outlineIcon,
+      groupBackground,
       nodeId,
       out: node.out ?? [],
       name: node.name ?? "",
@@ -76,6 +152,8 @@ export class AtlasTree {
           ...result,
           backgroundOverride,
           angle: orbitDelta.angle,
+          groupX: x,
+          groupY: y,
           x: x + orbitDelta.x,
           y: y + orbitDelta.y,
         };
@@ -123,11 +201,11 @@ export class AtlasTree {
           return -1;
         });
 
-        const [fromNode, toNode] = nodes;
+        // const [fromNode, toNode] = nodes
 
         connections.push({
-          fromNode,
-          toNode,
+          fromNode: nodeOne,
+          toNode: nodeTwo,
           isCurved,
           isSelected: false,
         });
@@ -167,31 +245,5 @@ export class AtlasTree {
       nodes: this.nodeMap,
       connectionMap: this.connectionMap,
     };
-  }
-
-  calcOrbitAngles(nodesInOrbit: number): number[] {
-    let orbitAngles = [];
-
-    if (nodesInOrbit === 16) {
-      // Every 30 and 45 degrees, per https://github.com/grindinggear/skilltree-export/blob/3.17.0/README.md
-      const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
-      orbitAngles = [...angles];
-    } else if (nodesInOrbit == 40) {
-      // Every 10 and 45 degrees
-      const angles = [
-        0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140, 150, 160, 170, 180, 190, 200, 210, 220,
-        225, 230, 240, 250, 260, 270, 280, 290, 300, 310, 315, 320, 330, 340, 350,
-      ];
-      orbitAngles = [...angles];
-    } else {
-      // Uniformly spaced
-      for (let i = 0; i < nodesInOrbit; i++) {
-        orbitAngles.push((360 * i) / nodesInOrbit);
-      }
-    }
-    for (let i = 0; i < orbitAngles.length; i++) {
-      orbitAngles[i] = orbitAngles[i] * (Math.PI / 180);
-    }
-    return orbitAngles;
   }
 }

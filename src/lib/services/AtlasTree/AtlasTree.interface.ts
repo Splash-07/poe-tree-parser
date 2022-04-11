@@ -14,6 +14,9 @@ export declare namespace GGGAtlasTree {
 
     out?: string[];
     in?: string[];
+    icon?: string;
+    isMastery?: boolean;
+    isNotable?: boolean;
   }
 
   export interface SkillNode extends Node {
@@ -54,7 +57,7 @@ export declare namespace GGGAtlasTree {
     notableActive: SkillSpriteCoords[];
     normalInactive: SkillSpriteCoords[];
     notableInactive: SkillSpriteCoords[];
-    mastery: SkillSpriteCoords[];
+    masteryInactive: SkillSpriteCoords[];
     masteryActive: SkillSpriteCoords[];
   }
 
@@ -72,6 +75,25 @@ export declare namespace GGGAtlasTree {
 }
 
 export declare namespace InternalAtlasTree {
+  export interface IconSprite {
+    filename: string;
+    cords: {
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    };
+  }
+
+  export interface NodeIcon {
+    active: IconSprite;
+    inactive: IconSprite;
+  }
+  export interface OutlineIcon {
+    active: string;
+    inactive: string;
+  }
+
   export interface OrbitDelta {
     x: number;
     y: number;
@@ -95,10 +117,13 @@ export declare namespace InternalAtlasTree {
     orbit?: number;
     orbitIndex?: number;
 
-    icon?: string;
+    nodeIcon: NodeIcon;
+    outlineIcon?: OutlineIcon;
+    groupBackground?: string;
     stats?: string[];
     name?: string;
-
+    groupX?: number;
+    groupY?: number;
     x?: number;
     y?: number;
     angle?: number;
