@@ -5,6 +5,8 @@ import { Viewport as PixiViewport } from "pixi-viewport";
 import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
 
 export interface ViewportProps {
+  width: number;
+  height: number;
   worldOptions: {
     minScale: number;
     maxScale: number;
@@ -21,10 +23,10 @@ export interface PixiComponentViewportProps extends ViewportProps {
 
 const PixiComponentViewport = PixiComponent("Viewport", {
   create: (props: PixiComponentViewportProps) => {
-    const { worldOptions, app, constants } = props;
+    const { worldOptions, width, height, app, constants } = props;
     const viewport = new PixiViewport({
-      screenWidth: window.innerWidth,
-      screenHeight: window.innerHeight,
+      screenWidth: width,
+      screenHeight: height,
       worldWidth: Math.abs(constants.minX) + Math.abs(constants.maxX),
       worldHeight: Math.abs(constants.minY) + Math.abs(constants.maxY),
       ticker: app.ticker,
