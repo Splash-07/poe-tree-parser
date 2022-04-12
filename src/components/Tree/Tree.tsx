@@ -1,18 +1,16 @@
-import { Container, Sprite } from "@inlet/react-pixi";
 import React, { FC } from "react";
-import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
-import { isMasteryNode, isRootNode } from "../../lib/services/AtlasTree/AtlasTree.typeguards";
-import TreeMastery from "./TreeMastery";
+import { Container, Sprite } from "@inlet/react-pixi";
+import TreeMastery from "./TreeMasteryNode";
 import TreeNode from "./TreeNode";
 import TreeConnection from "./TreeConnection";
 
-interface TreeProps {
-  nodes: Record<string, InternalAtlasTree.Node | InternalAtlasTree.NotableNode | InternalAtlasTree.MasteryNode>;
-  connectionMap: Record<string, InternalAtlasTree.Connection[]>;
-  constants: InternalAtlasTree.Constants;
-}
+import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
+import { isMasteryNode, isRootNode } from "../../lib/services/AtlasTree/AtlasTree.typeguards";
+import { AtlasTreeState } from "../../lib/store/slices/atlasTree.slice";
 
-const Tree: FC<TreeProps> = ({ nodes, connectionMap, constants }) => {
+interface AtlasTreeProps extends Pick<AtlasTreeState, "nodeMap" | "connectionMap" | "constants"> {}
+
+const Tree: FC<AtlasTreeProps> = ({ nodeMap, connectionMap, constants }) => {
   const shouldRenderNode = (node: InternalAtlasTree.Node) => {
     if (!node.x || !node.y) {
       return false;
@@ -32,6 +30,7 @@ const Tree: FC<TreeProps> = ({ nodes, connectionMap, constants }) => {
 
     return true;
   };
+
   const connectionsFiltered = Object.keys(connectionMap)
     .map((fromNodeId) => connectionMap[fromNodeId])
     .reduce((acc, cur) => cur.reduce((innerAcc, innerCur) => [...innerAcc, innerCur], acc), [])
@@ -39,7 +38,7 @@ const Tree: FC<TreeProps> = ({ nodes, connectionMap, constants }) => {
 
   return (
     <Container sortableChildren={true}>
-      {Object.values(nodes).map(
+      {Object.values(nodeMap).map(
         (node, index) => node.nodeId !== "root" && isMasteryNode(node) && <TreeMastery key={index} node={node} />
       )}
       {connectionsFiltered.map((connection, index) => (
@@ -47,9 +46,9 @@ const Tree: FC<TreeProps> = ({ nodes, connectionMap, constants }) => {
       ))}
 
       {/* TODO: parse masteryNodeMap */}
-      {Object.values(nodes).map(
+      {Object.values(nodeMap).map(
         (node, index) =>
-          node.nodeId !== "root" &&
+          shouldRenderNode(node) &&
           (isRootNode(node) ? (
             <Sprite
               key={index}

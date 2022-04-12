@@ -51,9 +51,7 @@ const PixiComponentViewport = PixiComponent("Viewport", {
       .wheel()
       // [0.1246, 0.2109, 0.2972, 0.3835] 0.0863
       .zoom(0.0863 * 100)
-      .clampZoom(clampZoomOptions)
-      .getVisibleBounds();
-    viewport.on("clicked", () => console.log(viewport.scaled), console.log(viewport.scaled));
+      .clampZoom(clampZoomOptions);
     return viewport;
   },
 });

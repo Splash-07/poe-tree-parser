@@ -129,6 +129,7 @@ export class AtlasTree {
   mapToInternalNode(node: GGGAtlasTree.Node, nodeId: string): InternalAtlasTree.Node {
     const { nodeIcon, outlineIcon, groupBackground } = this.parseNodeIcon(node, this.skillSprites, 3);
     const { icon, ...restNode } = node;
+
     return {
       ...restNode,
       nodeIcon,
@@ -139,6 +140,7 @@ export class AtlasTree {
       name: node.name ?? "",
       groupId: node.group?.toString() ?? null,
       isSelected: false,
+      isHovered: false,
     };
   }
 
@@ -146,14 +148,14 @@ export class AtlasTree {
     let result: InternalAtlasTree.Node = this.mapToInternalNode(node, nodeId);
     if (isSkillNode(node) && node.group) {
       if (node.orbit !== undefined && node.orbitIndex !== undefined) {
-        const { x, y, backgroundOverride } = this.groupMap[node.group];
         const orbitDelta = this.orbitDelta[node.orbit][node.orbitIndex];
+        const { x, y, backgroundOverride } = this.groupMap[node.group];
         result = {
           ...result,
           backgroundOverride,
-          angle: orbitDelta.angle,
           groupX: x,
           groupY: y,
+          angle: orbitDelta.angle,
           x: x + orbitDelta.x,
           y: y + orbitDelta.y,
         };
@@ -242,7 +244,7 @@ export class AtlasTree {
     return {
       constants,
       skillSprites: this.skillSprites,
-      nodes: this.nodeMap,
+      nodeMap: this.nodeMap,
       connectionMap: this.connectionMap,
     };
   }

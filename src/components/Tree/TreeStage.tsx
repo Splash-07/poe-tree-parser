@@ -1,19 +1,18 @@
-import { Sprite, Stage, Container, TilingSprite, Graphics } from "@inlet/react-pixi";
-import { useState } from "react";
-import { parseTreeData } from "../../lib/parseTreeData";
-import Tree from "./Tree";
-
 import { TreeBgFilter, TreeContainerFilter } from "./TreeVisualFilters";
-
+import { Sprite, Stage, TilingSprite } from "@inlet/react-pixi";
+import Tree from "./Tree";
 import TreeViewport from "./TreeViewport";
+import { useState } from "react";
+import { useAppSelector } from "../../lib/hooks/store.hooks";
 
 const TreeStage = () => {
-  const { nodes, constants, connectionMap } = parseTreeData();
+  const { constants, nodeMap, connectionMap } = useAppSelector((state) => state.atlasTree);
 
   const [stageOptions, setStageOptions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
+
   const worldOptions = {
     minScale: constants.imageZoomLevels[0], // (max zoomOut)
     maxScale: constants.imageZoomLevels[3], // (max zoomIn)
@@ -47,7 +46,7 @@ const TreeStage = () => {
               scale={7.25}
             />
           </TreeBgFilter>
-          <Tree nodes={nodes} constants={constants} connectionMap={connectionMap} />
+          <Tree nodeMap={nodeMap} connectionMap={connectionMap} constants={constants} />
         </TreeViewport>
       </TreeContainerFilter>
     </Stage>

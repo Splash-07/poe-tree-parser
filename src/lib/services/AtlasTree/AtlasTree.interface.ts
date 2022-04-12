@@ -112,26 +112,29 @@ export declare namespace InternalAtlasTree {
   }
 
   export interface Node {
+    name: string;
     nodeId: string;
-    groupId?: string;
-    orbit?: number;
-    orbitIndex?: number;
+    groupId: string;
+    orbit: number;
+    orbitIndex: number;
 
     nodeIcon: NodeIcon;
     outlineIcon?: OutlineIcon;
     groupBackground?: string;
     stats?: string[];
-    name?: string;
+
     groupX?: number;
     groupY?: number;
     x?: number;
     y?: number;
     angle?: number;
+
     backgroundOverride?: number;
 
     out: string[];
 
     isSelected: boolean;
+    isHovered: boolean;
   }
 
   export interface RootNode extends Node {
@@ -156,7 +159,7 @@ export declare namespace InternalAtlasTree {
   export interface Data {
     constants: Constants;
     connectionMap: Record<string, Connection[]>;
-    nodes: Record<string, Node | NotableNode | MasteryNode>;
+    nodeMap: Record<string, Node | NotableNode | MasteryNode>;
     skillSprites: GGGAtlasTree.SkillSprites;
   }
 }
