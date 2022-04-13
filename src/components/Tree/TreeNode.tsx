@@ -1,23 +1,34 @@
 import { Container, Sprite, TilingSprite } from "@inlet/react-pixi";
-import React, { FC } from "react";
-import { useAppDispatch } from "../../lib/hooks/store.hooks";
+import { FC, memo } from "react";
+import { useDispatch } from "react-redux";
 import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
-import { selectNode } from "../../lib/store/slices/atlasTree.slice";
+import { removeNodeSelection, selectNode } from "../../lib/store/slices/atlasTree.slice";
 
 interface TreeNodeProps {
   node: InternalAtlasTree.Node | InternalAtlasTree.NotableNode | InternalAtlasTree.MasteryNode;
-  connectionMap: Record<string, InternalAtlasTree.Connection[]>;
 }
-const TreeNode: FC<TreeNodeProps> = ({ node, connectionMap }) => {
-  // const dispatch = useAppDispatch();
+const TreeNode: FC<TreeNodeProps> = ({ node }) => {
+  const dispatch = useDispatch();
+  const iconSrc = node.isSelected ? `/${node.nodeIcon?.active.filename}` : `/${node.nodeIcon?.inactive.filename}`;
+  const outlineIconSrc = node.isSelected ? `/${node.outlineIcon?.active}` : `/${node.outlineIcon?.inactive}`;
+  function handleClickOnNode() {
+    if (node.isSelected) {
+      dispatch(removeNodeSelection(node.nodeId));
+    } else {
+      dispatch(selectNode(node.nodeId));
+    }
+  }
   return (
     <Container sortableChildren={true} x={node.x} y={node.y}>
       <TilingSprite
-        image={`/${node.nodeIcon?.inactive.filename}`}
+        image={iconSrc}
         interactive={true}
-        // click={(event) => dispatch(selectNode(node.nodeId))}
+        click={() => {
+          handleClickOnNode();
+        }}
+        cursor="pointer"
         anchor={0.5}
-        scale={2.6}
+        scale={3}
         width={node.nodeIcon.inactive.cords.w}
         height={node.nodeIcon.inactive.cords.h}
         tilePosition={{
@@ -25,9 +36,9 @@ const TreeNode: FC<TreeNodeProps> = ({ node, connectionMap }) => {
           y: -node.nodeIcon.inactive.cords.y,
         }}
       />
-      {node.outlineIcon && <Sprite image={`/${node.outlineIcon.inactive}`} anchor={0.5} scale={2.7} />}
+      {node.outlineIcon && <Sprite image={outlineIconSrc} anchor={0.5} scale={2.7} />}
     </Container>
   );
 };
 
-export default TreeNode;
+export const MemoisedTreeNode = memo(TreeNode);

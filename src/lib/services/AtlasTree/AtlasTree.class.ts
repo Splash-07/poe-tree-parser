@@ -179,7 +179,6 @@ export class AtlasTree {
       {}
     );
   }
-
   parseConnections(): Record<string, InternalAtlasTree.Connection[]> {
     let connections: InternalAtlasTree.Connection[] = [];
     Object.keys(this.nodeMap).forEach((nodeOneId) => {
@@ -203,11 +202,11 @@ export class AtlasTree {
           return -1;
         });
 
-        // const [fromNode, toNode] = nodes
+        const [fromNode, toNode] = nodes;
 
         connections.push({
-          fromNode: nodeOne,
-          toNode: nodeTwo,
+          fromNode,
+          toNode,
           isCurved,
           isSelected: false,
         });
@@ -223,7 +222,6 @@ export class AtlasTree {
       };
     }, {});
   }
-
   getData(): InternalAtlasTree.Data {
     this.orbitDelta = this.computeOrbitDelta();
     const constants = {
@@ -240,7 +238,6 @@ export class AtlasTree {
     this.groupMap = this.parseGroups();
     this.nodeMap = this.parseNodes();
     this.connectionMap = this.parseConnections();
-
     return {
       constants,
       skillSprites: this.skillSprites,

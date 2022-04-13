@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { Graphics } from "@inlet/react-pixi";
 
-import React, { FC, useCallback } from "react";
+import React, { FC, memo, useCallback } from "react";
 import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
 
 interface TreeConnectorProps {
@@ -10,20 +10,27 @@ interface TreeConnectorProps {
 }
 
 const DrawLineConnection = (connection: TreeConnectorProps["connection"]) => {
-  const { fromNode, toNode } = connection;
-  const draw = useCallback((g: PIXI.Graphics) => {
-    g.clear();
-    g.lineStyle(16, 0x8f6c29, 0.4);
-    g.moveTo(fromNode.x!, fromNode.y!);
-    g.lineTo(toNode.x!, toNode.y!);
-    g.endFill();
-  }, []);
+  const { fromNode, toNode, isSelected } = connection;
+  const color = isSelected ? 0xffffff : 0x8f6c29;
+  const alpha = isSelected ? 1 : 0.4;
+  const draw = useCallback(
+    (g: PIXI.Graphics) => {
+      g.clear();
+      g.lineStyle(16, color, alpha);
+      g.moveTo(fromNode.x!, fromNode.y!);
+      g.lineTo(toNode.x!, toNode.y!);
+      g.endFill();
+    },
+    [color, alpha]
+  );
 
   return <Graphics draw={draw} />;
 };
 
 const DrawArcConnection = (connection: TreeConnectorProps["connection"], orbitRadii: number[]) => {
-  const { fromNode, toNode } = connection;
+  const { fromNode, toNode, isSelected } = connection;
+  const color = isSelected ? 0xffffff : 0x8f6c29;
+  const alpha = isSelected ? 1 : 0.4;
   const orbitRadius = orbitRadii[fromNode.orbit!];
   let startAngle = fromNode.angle! < toNode.angle! ? fromNode.angle : toNode.angle;
   let endAngle = fromNode.angle! < toNode.angle! ? toNode.angle : fromNode.angle;
@@ -36,12 +43,15 @@ const DrawArcConnection = (connection: TreeConnectorProps["connection"], orbitRa
   startAngle! -= Math.PI / 2;
   endAngle! -= Math.PI / 2;
 
-  const draw = useCallback((g: PIXI.Graphics) => {
-    g.clear();
-    g.lineStyle(16, 0x8f6c29, 0.4);
-    g.arc(fromNode.groupX!, fromNode.groupY!, orbitRadius, startAngle!, endAngle!, false);
-    g.endFill();
-  }, []);
+  const draw = useCallback(
+    (g: PIXI.Graphics) => {
+      g.clear();
+      g.lineStyle(16, color, alpha);
+      g.arc(fromNode.groupX!, fromNode.groupY!, orbitRadius, startAngle!, endAngle!, false);
+      g.endFill();
+    },
+    [color, alpha]
+  );
 
   return <Graphics draw={draw} />;
 };
@@ -50,7 +60,7 @@ const TreeConnector: FC<TreeConnectorProps> = ({ connection, orbitRadii }) => {
   return connection.isCurved ? DrawArcConnection(connection, orbitRadii) : DrawLineConnection(connection);
 };
 
-export default TreeConnector;
+export const MemoisedTreeConnector = memo(TreeConnector);
 
 // Line from texture
 // const DrawLineConnection = (connection: TreeConnectorProps["connection"]) => {

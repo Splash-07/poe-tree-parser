@@ -1,16 +1,18 @@
-import React, { FC } from "react";
+import { useEffect } from "react";
 import { Container, Sprite } from "@inlet/react-pixi";
-import TreeMastery from "./TreeMasteryNode";
-import TreeNode from "./TreeNode";
-import TreeConnection from "./TreeConnection";
+import { MemoisedTreeMasteryNode } from "./TreeMasteryNode";
+import { MemoisedTreeNode } from "./TreeNode";
+import { MemoisedTreeConnector } from "./TreeConnection";
 
 import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
 import { isMasteryNode, isRootNode } from "../../lib/services/AtlasTree/AtlasTree.typeguards";
-import { AtlasTreeState } from "../../lib/store/slices/atlasTree.slice";
+import { useAppDispatch, useAppSelector } from "../../lib/hooks/store.hooks";
+import { updateTreeState } from "../../lib/store/slices/atlasTree.slice";
 
-interface AtlasTreeProps extends Pick<AtlasTreeState, "nodeMap" | "connectionMap" | "constants"> {}
+const Tree = () => {
+  const { nodeMap, connectionMap, constants, selectedNodeList } = useAppSelector((state) => state.atlasTree);
+  const dispatch = useAppDispatch();
 
-const Tree: FC<AtlasTreeProps> = ({ nodeMap, connectionMap, constants }) => {
   const shouldRenderNode = (node: InternalAtlasTree.Node) => {
     if (!node.x || !node.y) {
       return false;
@@ -31,24 +33,32 @@ const Tree: FC<AtlasTreeProps> = ({ nodeMap, connectionMap, constants }) => {
     return true;
   };
 
-  const connectionsFiltered = Object.keys(connectionMap)
-    .map((fromNodeId) => connectionMap[fromNodeId])
-    .reduce((acc, cur) => cur.reduce((innerAcc, innerCur) => [...innerAcc, innerCur], acc), [])
-    .filter(shouldRenderConnection);
+  useEffect(() => {
+    dispatch(updateTreeState());
+  }, [selectedNodeList, dispatch]);
 
   return (
     <Container sortableChildren={true}>
       {Object.values(nodeMap).map(
-        (node, index) => node.nodeId !== "root" && isMasteryNode(node) && <TreeMastery key={index} node={node} />
+        (node, index) =>
+          node.nodeId !== "root" && isMasteryNode(node) && <MemoisedTreeMasteryNode key={index} node={node} />
       )}
-      {connectionsFiltered.map((connection, index) => (
-        <TreeConnection key={10000 + index} connection={connection} orbitRadii={constants.orbitRadii} />
-      ))}
-
-      {/* TODO: parse masteryNodeMap */}
+      {Object.values(connectionMap).map((connectionList, indexOne) => {
+        return connectionList.map(
+          (connection, indexTwo) =>
+            shouldRenderConnection(connection) && (
+              <MemoisedTreeConnector
+                key={10000 + indexOne + indexTwo}
+                connection={connection}
+                orbitRadii={constants.orbitRadii}
+              />
+            )
+        );
+      })}
       {Object.values(nodeMap).map(
         (node, index) =>
           shouldRenderNode(node) &&
+          !isMasteryNode(node) &&
           (isRootNode(node) ? (
             <Sprite
               key={index}
@@ -59,7 +69,7 @@ const Tree: FC<AtlasTreeProps> = ({ nodeMap, connectionMap, constants }) => {
               anchor={0.5}
             />
           ) : (
-            <TreeNode key={index} node={node} connectionMap={connectionMap} />
+            <MemoisedTreeNode key={index} node={node} />
           ))
       )}
     </Container>
