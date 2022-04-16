@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, current } from "@reduxjs/toolkit";
 import { parseTreeData } from "../../parseTreeData";
 import { InternalAtlasTree } from "../../services/AtlasTree/AtlasTree.interface";
 
@@ -7,9 +7,9 @@ export interface AtlasTreeState {
   nodeMap: Record<string, InternalAtlasTree.Node>;
   connectionMap: Record<string, InternalAtlasTree.Connection[]>;
   constants: InternalAtlasTree.Constants;
-  //   nodeList:
-  // connectionList:
-  selectedNodeList: string[];
+  treeUpdate: boolean;
+  nodesToBeAllocated: Record<string, number>;
+  nodesToBeDeallocated: Record<string, number>;
   shortPathNodeList: string[];
 }
 const { nodeMap, constants, connectionMap } = parseTreeData();
@@ -18,9 +18,10 @@ const initialState: AtlasTreeState = {
   nodeMap,
   connectionMap,
   constants,
-  // nodeList:[],
-  // connectionList:[],
-  selectedNodeList: [],
+
+  treeUpdate: false,
+  nodesToBeAllocated: { "29045": 1 },
+  nodesToBeDeallocated: {},
   shortPathNodeList: [],
 };
 
@@ -28,43 +29,81 @@ export const atlasTreeSlice = createSlice({
   name: "atlasTree",
   initialState,
   reducers: {
+    triggerTreeUpdate: (state) => {
+      state.treeUpdate = true;
+    },
     updateTreeState: (state) => {
-      state.selectedNodeList?.forEach((nodeId) => {
-        const node = state.nodeMap[nodeId];
-        if (node) {
-          node.isSelected = true;
+      const nodesToBeDeallocatedList = Object.keys(state.nodesToBeDeallocated);
+      const nodesToBeAllocatedList = Object.keys(state.nodesToBeAllocated);
 
-          const rootConnection = state.connectionMap[state.rootNodeId];
-          rootConnection.forEach((rootConnection) => {
-            if (rootConnection.toNode.nodeId === nodeId) {
-              rootConnection.isSelected = true;
-            }
-          });
+      // deallocate nodes
+      if (nodesToBeDeallocatedList.length > 0) {
+        nodesToBeDeallocatedList.forEach((nodeId) => {
+          const node = state.nodeMap[nodeId];
+          if (node) {
+            node.isSelected = false;
+          }
+        });
 
+        // remove all connection from allocated nodes
+        nodesToBeAllocatedList.forEach((nodeId) => {
           const connections = state.connectionMap[nodeId];
           connections?.forEach((connection) => {
-            if (state.selectedNodeList.includes(connection.toNode.nodeId)) {
-              connection.isSelected = true;
-            }
+            connection.isSelected = false;
           });
-        }
-      });
-    },
+        });
 
-    selectNode: (state, { payload }) => {
-      state.selectedNodeList.push(payload);
-    },
-    removeNodeSelection: (state, { payload }) => {
-      state.selectedNodeList = state.selectedNodeList.filter((nodeId) => nodeId !== payload);
-      const node = state.nodeMap[payload];
-      if (node) {
-        node.isSelected = false;
+        // filter out deallocated nodes from allocated nodes state
+        nodesToBeDeallocatedList.forEach((nodeId) => {
+          delete state.nodesToBeAllocated[nodeId];
+        });
+        const filteredAllocatedNodesList = Object.keys(state.nodesToBeAllocated);
+
+        // connect all nodes after filtering out deallocated nodes
+        filteredAllocatedNodesList.forEach((nodeId) => {
+          const node = state.nodeMap[nodeId];
+          if (node) {
+            const connections = state.connectionMap[nodeId];
+            connections?.forEach((connection) => {
+              if (state.nodesToBeAllocated[connection.toNode.nodeId]) {
+                connection.isSelected = true;
+              }
+            });
+          }
+        });
+
+        state.nodesToBeDeallocated = {};
+        state.treeUpdate = false;
+        return;
       }
+      // allocate nodes
+      if (nodesToBeAllocatedList.length > 0) {
+        nodesToBeAllocatedList.forEach((nodeId) => {
+          const node = state.nodeMap[nodeId];
+          if (node) {
+            node.isSelected = true;
+            const connections = state.connectionMap[nodeId];
+            connections?.forEach((connection) => {
+              if (state.nodesToBeAllocated[connection.toNode.nodeId]) {
+                connection.isSelected = true;
+              }
+            });
+          }
+        });
+      }
+
+      state.treeUpdate = false;
+    },
+    allocateNodes: (state, { payload }: { payload: string[] }) => {
+      payload.forEach((nodeId) => (state.nodesToBeAllocated[nodeId] = 1));
+    },
+    deallocateNodes: (state, { payload }: { payload: string[] }) => {
+      payload.forEach((nodeId) => (state.nodesToBeDeallocated[nodeId] = 1));
     },
   },
 });
 
 // Action creators are generated for each case reducer function
-export const { updateTreeState, selectNode, removeNodeSelection } = atlasTreeSlice.actions;
+export const { updateTreeState, allocateNodes, deallocateNodes, triggerTreeUpdate } = atlasTreeSlice.actions;
 
 export default atlasTreeSlice.reducer;

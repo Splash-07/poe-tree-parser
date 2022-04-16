@@ -2,21 +2,20 @@ import { Container, Sprite, TilingSprite } from "@inlet/react-pixi";
 import { FC, memo } from "react";
 import { useDispatch } from "react-redux";
 import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
-import { removeNodeSelection, selectNode } from "../../lib/store/slices/atlasTree.slice";
+import { allocateNodes, deallocateNodes, triggerTreeUpdate } from "../../lib/store/slices/atlasTree.slice";
 
 interface TreeNodeProps {
   node: InternalAtlasTree.Node | InternalAtlasTree.NotableNode | InternalAtlasTree.MasteryNode;
+  connectionMap: Record<string, InternalAtlasTree.Connection[]>;
 }
-const TreeNode: FC<TreeNodeProps> = ({ node }) => {
+const TreeNode: FC<TreeNodeProps> = ({ node, connectionMap }) => {
   const dispatch = useDispatch();
   const iconSrc = node.isSelected ? `/${node.nodeIcon?.active.filename}` : `/${node.nodeIcon?.inactive.filename}`;
   const outlineIconSrc = node.isSelected ? `/${node.outlineIcon?.active}` : `/${node.outlineIcon?.inactive}`;
-  function handleClickOnNode() {
-    if (node.isSelected) {
-      dispatch(removeNodeSelection(node.nodeId));
-    } else {
-      dispatch(selectNode(node.nodeId));
-    }
+  function handleClickOnNode(nodeId: string) {
+    node.isSelected ? dispatch(deallocateNodes([nodeId])) : dispatch(allocateNodes([nodeId]));
+    dispatch(triggerTreeUpdate());
+    console.log(nodeId, connectionMap[nodeId]);
   }
   return (
     <Container sortableChildren={true} x={node.x} y={node.y}>
@@ -24,7 +23,7 @@ const TreeNode: FC<TreeNodeProps> = ({ node }) => {
         image={iconSrc}
         interactive={true}
         click={() => {
-          handleClickOnNode();
+          handleClickOnNode(node.nodeId);
         }}
         cursor="pointer"
         anchor={0.5}

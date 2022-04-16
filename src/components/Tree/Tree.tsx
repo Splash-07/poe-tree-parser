@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from "../../lib/hooks/store.hooks";
 import { updateTreeState } from "../../lib/store/slices/atlasTree.slice";
 
 const Tree = () => {
-  const { nodeMap, connectionMap, constants, selectedNodeList } = useAppSelector((state) => state.atlasTree);
+  const { nodeMap, connectionMap, constants, treeUpdate } = useAppSelector((state) => state.atlasTree);
   const dispatch = useAppDispatch();
 
   const shouldRenderNode = (node: InternalAtlasTree.Node) => {
@@ -34,27 +34,29 @@ const Tree = () => {
   };
 
   useEffect(() => {
-    dispatch(updateTreeState());
-  }, [selectedNodeList, dispatch]);
+    if (treeUpdate === true) {
+      dispatch(updateTreeState());
+    }
+  }, [treeUpdate, dispatch]);
 
   return (
     <Container sortableChildren={true}>
+      {/* Mastery nodes rendering */}
       {Object.values(nodeMap).map(
         (node, index) =>
           node.nodeId !== "root" && isMasteryNode(node) && <MemoisedTreeMasteryNode key={index} node={node} />
       )}
+      {/* Connections rendering */}
       {Object.values(connectionMap).map((connectionList, indexOne) => {
-        return connectionList.map(
-          (connection, indexTwo) =>
-            shouldRenderConnection(connection) && (
-              <MemoisedTreeConnector
-                key={10000 + indexOne + indexTwo}
-                connection={connection}
-                orbitRadii={constants.orbitRadii}
-              />
-            )
-        );
+        return connectionList.map((connection, indexTwo) => (
+          <MemoisedTreeConnector
+            key={10000 + indexOne + indexTwo}
+            connection={connection}
+            orbitRadii={constants.orbitRadii}
+          />
+        ));
       })}
+      {/* Tree root node and normal + notable nodes rendering */}
       {Object.values(nodeMap).map(
         (node, index) =>
           shouldRenderNode(node) &&
@@ -69,7 +71,7 @@ const Tree = () => {
               anchor={0.5}
             />
           ) : (
-            <MemoisedTreeNode key={index} node={node} />
+            <MemoisedTreeNode key={index} node={node} connectionMap={connectionMap} />
           ))
       )}
     </Container>

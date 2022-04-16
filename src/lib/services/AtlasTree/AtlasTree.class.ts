@@ -205,8 +205,8 @@ export class AtlasTree {
         const [fromNode, toNode] = nodes;
 
         connections.push({
-          fromNode,
-          toNode,
+          fromNode: nodeOne,
+          toNode: nodeTwo,
           isCurved,
           isSelected: false,
         });
