@@ -132,6 +132,7 @@ export declare namespace InternalAtlasTree {
     backgroundOverride?: number;
 
     out: string[];
+    in: string[];
 
     isSelected: boolean;
     isHovered: boolean;

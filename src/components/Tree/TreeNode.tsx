@@ -1,22 +1,27 @@
-import { Container, Sprite, TilingSprite } from "@inlet/react-pixi";
+import { Container, Sprite, Text, TilingSprite } from "@inlet/react-pixi";
+import { TextStyle } from "pixi.js";
 import { FC, memo } from "react";
 import { useDispatch } from "react-redux";
-import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
-import { allocateNodes, deallocateNodes, triggerTreeUpdate } from "../../lib/store/slices/atlasTree.slice";
+import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
+import { getShortestPathToNode, triggerTreeUpdate } from "../../lib/store/slices/atlasTree.slice";
 
 interface TreeNodeProps {
   node: InternalAtlasTree.Node | InternalAtlasTree.NotableNode | InternalAtlasTree.MasteryNode;
-  connectionMap: Record<string, InternalAtlasTree.Connection[]>;
 }
-const TreeNode: FC<TreeNodeProps> = ({ node, connectionMap }) => {
+const TreeNode: FC<TreeNodeProps> = ({ node }) => {
   const dispatch = useDispatch();
   const iconSrc = node.isSelected ? `/${node.nodeIcon?.active.filename}` : `/${node.nodeIcon?.inactive.filename}`;
   const outlineIconSrc = node.isSelected ? `/${node.outlineIcon?.active}` : `/${node.outlineIcon?.inactive}`;
-  function handleClickOnNode(nodeId: string) {
-    node.isSelected ? dispatch(deallocateNodes([nodeId])) : dispatch(allocateNodes([nodeId]));
+
+  function handleClickOnNode(toNodeId: string) {
+    node.isSelected
+      ? dispatch(getShortestPathToNode({ toNodeId, action: "DEALLOCATE" }))
+      : dispatch(getShortestPathToNode({ toNodeId, action: "ALLOCATE" }));
+
     dispatch(triggerTreeUpdate());
-    console.log(nodeId, connectionMap[nodeId]);
   }
+
+  console.log("rerender");
   return (
     <Container sortableChildren={true} x={node.x} y={node.y}>
       <TilingSprite
@@ -36,6 +41,25 @@ const TreeNode: FC<TreeNodeProps> = ({ node, connectionMap }) => {
         }}
       />
       {node.outlineIcon && <Sprite image={outlineIconSrc} anchor={0.5} scale={2.7} />}
+      <Text
+        text={node.nodeId}
+        style={
+          new TextStyle({
+            align: "center",
+            fontFamily: '"Source Sans Pro", Helvetica, sans-serif',
+            fontSize: 50,
+            fill: ["#ffffff"], // gradient
+            stroke: "#01d27e",
+            strokeThickness: 5,
+            letterSpacing: 20,
+            dropShadow: true,
+            dropShadowColor: "#ccced2",
+            dropShadowBlur: 4,
+            dropShadowAngle: Math.PI / 6,
+            dropShadowDistance: 6,
+          })
+        }
+      ></Text>
     </Container>
   );
 };

@@ -4,13 +4,15 @@ import { MemoisedTreeMasteryNode } from "./TreeMasteryNode";
 import { MemoisedTreeNode } from "./TreeNode";
 import { MemoisedTreeConnector } from "./TreeConnection";
 
-import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
-import { isMasteryNode, isRootNode } from "../../lib/services/AtlasTree/AtlasTree.typeguards";
+import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
+import { isMasteryNode, isRootNode } from "../../lib/services/AtlasTreeParser/AtlasTree.typeguards";
 import { useAppDispatch, useAppSelector } from "../../lib/hooks/store.hooks";
 import { updateTreeState } from "../../lib/store/slices/atlasTree.slice";
 
 const Tree = () => {
-  const { nodeMap, connectionMap, constants, treeUpdate } = useAppSelector((state) => state.atlasTree);
+  const { nodeMap, connectionMap, constants, treeUpdate, shortPathNodeList } = useAppSelector(
+    (state) => state.atlasTree
+  );
   const dispatch = useAppDispatch();
 
   const shouldRenderNode = (node: InternalAtlasTree.Node) => {
@@ -71,7 +73,7 @@ const Tree = () => {
               anchor={0.5}
             />
           ) : (
-            <MemoisedTreeNode key={index} node={node} connectionMap={connectionMap} />
+            <MemoisedTreeNode key={index} node={node} />
           ))
       )}
     </Container>

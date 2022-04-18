@@ -1,8 +1,8 @@
-import { AtlasTree } from "./services/AtlasTree/AtlasTree.class";
 import { default as passiveTreeData } from "./data/SkillTree.json";
+import { AtlasTreeParser } from "./services/AtlasTreeParser/AtlasTreeParser.class";
 
 export function parseTreeData() {
-  const service = new AtlasTree(passiveTreeData);
+  const service = new AtlasTreeParser(passiveTreeData);
 
   return service.getData();
 }

@@ -1,6 +1,6 @@
 import { Container, Sprite, TilingSprite } from "@inlet/react-pixi";
 import React, { FC, memo } from "react";
-import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
+import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
 interface TreeMasteryNodeProps {
   node: InternalAtlasTree.MasteryNode;
 }

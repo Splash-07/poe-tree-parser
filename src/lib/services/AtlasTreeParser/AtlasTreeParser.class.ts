@@ -1,7 +1,7 @@
 import { GGGAtlasTree, InternalAtlasTree } from "./AtlasTree.interface";
 import { isSkillNode } from "./AtlasTree.typeguards";
 
-export class AtlasTree {
+export class AtlasTreeParser {
   data: GGGAtlasTree.Data;
   skillSprites: GGGAtlasTree.SkillSprites;
   groupMap: Record<string, GGGAtlasTree.Group> = {};
@@ -126,6 +126,7 @@ export class AtlasTree {
 
     return result;
   }
+
   mapToInternalNode(node: GGGAtlasTree.Node, nodeId: string): InternalAtlasTree.Node {
     const { nodeIcon, outlineIcon, groupBackground } = this.parseNodeIcon(node, this.skillSprites, 3);
     const { icon, ...restNode } = node;
@@ -136,6 +137,7 @@ export class AtlasTree {
       outlineIcon,
       groupBackground,
       nodeId,
+      in: node.in ?? [],
       out: node.out ?? [],
       name: node.name ?? "",
       groupId: node.group?.toString() ?? null,
@@ -179,6 +181,7 @@ export class AtlasTree {
       {}
     );
   }
+
   parseConnections(): Record<string, InternalAtlasTree.Connection[]> {
     let connections: InternalAtlasTree.Connection[] = [];
     Object.keys(this.nodeMap).forEach((nodeOneId) => {
@@ -222,6 +225,7 @@ export class AtlasTree {
       };
     }, {});
   }
+
   getData(): InternalAtlasTree.Data {
     this.orbitDelta = this.computeOrbitDelta();
     const constants = {

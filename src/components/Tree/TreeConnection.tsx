@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js";
 import { Graphics } from "@inlet/react-pixi";
 
 import React, { FC, memo, useCallback } from "react";
-import { InternalAtlasTree } from "../../lib/services/AtlasTree/AtlasTree.interface";
+import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
 
 interface TreeConnectorProps {
   connection: InternalAtlasTree.Connection;
