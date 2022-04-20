@@ -13,14 +13,16 @@ const DrawLineConnection = (connection: TreeConnectorProps["connection"]) => {
   const { fromNode, toNode, isSelected, canBeAllocated, canBeUnallocated } =
     connection;
   const color = canBeAllocated
-    ? 0x276749
+    ? 0x38a169
     : canBeUnallocated
-    ? 0xc53030
+    ? 0xe53e3e
+    : isSelected
+    ? 0x63b3ed
     : 0x8f6c29;
   const alpha = canBeAllocated
-    ? 0.4
+    ? 1
     : canBeUnallocated
-    ? 0.4
+    ? 1
     : isSelected
     ? 1
     : 0.4;
@@ -45,14 +47,16 @@ const DrawArcConnection = (
   const { fromNode, toNode, isSelected, canBeAllocated, canBeUnallocated } =
     connection;
   const color = canBeAllocated
-    ? 0x276749
+    ? 0x38a169
     : canBeUnallocated
-    ? 0xc53030
+    ? 0xe53e3e
+    : isSelected
+    ? 0x63b3ed
     : 0x8f6c29;
   const alpha = canBeAllocated
-    ? 0.4
+    ? 1
     : canBeUnallocated
-    ? 0.4
+    ? 1
     : isSelected
     ? 1
     : 0.4;

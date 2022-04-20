@@ -79,7 +79,7 @@ const TreeNode: FC<TreeNodeProps> = ({ node }) => {
       {node.outlineIcon && (
         <Sprite image={outlineIconSrc} anchor={0.5} scale={2.7} />
       )}
-      <Text
+      {/* <Text
         text={node.nodeId}
         style={
           new TextStyle({
@@ -97,7 +97,7 @@ const TreeNode: FC<TreeNodeProps> = ({ node }) => {
             dropShadowDistance: 6,
           })
         }
-      ></Text>
+      ></Text> */}
     </Container>
   );
 };

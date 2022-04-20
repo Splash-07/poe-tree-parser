@@ -17,7 +17,6 @@ export interface AtlasTreeState {
   };
   nodesToBeDeallocated: {
     list: string[];
-    target?: string;
     map: Record<string, number>;
   };
 }
@@ -36,7 +35,6 @@ const initialState: AtlasTreeState = {
   },
   nodesToBeDeallocated: {
     list: [],
-    target: undefined,
     map: {},
   },
 };
@@ -53,55 +51,61 @@ export const atlasTreeSlice = createSlice({
       const nodesToBeAllocatedList = state.nodesToBeAllocated.list;
       const nodesToBeAllocatedMap = state.nodesToBeAllocated.map;
 
-      const nodesToBeDeallocated = state.nodesToBeDeallocated.list;
+      const nodesToBeDeallocatedList = state.nodesToBeDeallocated.list;
       const nodesToBeDeallocatedMap = state.nodesToBeDeallocated.map;
 
-      // highlight nodes, that can be deallocated
-      if (nodesToBeDeallocated.length > 0) {
-        nodesToBeDeallocated.forEach((nodeId) => {
-          const node = state.nodeMap[nodeId];
+      function changeConnectionType(
+        nodeId: string,
+        nodesMap: Record<string, number>,
+        type: "canBeAllocated" | "canBeUnallocated"
+      ) {
+        const node = state.nodeMap[nodeId];
+        if (node) {
+          const connections = state.connectionMap[nodeId];
+          connections?.forEach((connection) => {
+            if (nodesMap[connection.toNode.nodeId]) {
+              connection[type] = true;
+            }
+          });
+        }
+      }
 
-          if (node) {
-            const connections = state.connectionMap[nodeId];
-            connections?.forEach((connection) => {
-              if (nodesToBeDeallocatedMap[connection.toNode.nodeId]) {
-                connection.canBeUnallocated = true;
-              }
-            });
-          }
+      // highlight nodes, that can be deallocated
+      if (nodesToBeDeallocatedList.length > 0) {
+        nodesToBeDeallocatedList.forEach((nodeId) => {
+          changeConnectionType(
+            nodeId,
+            nodesToBeDeallocatedMap,
+            "canBeUnallocated"
+          );
         });
-        state.treeUpdateOnHover = false;
       }
 
       // highlight unAllocated nodes
       if (nodesToBeAllocatedList.length > 0) {
         nodesToBeAllocatedList.forEach((nodeId) => {
-          const node = state.nodeMap[nodeId];
-
-          if (node) {
-            const connections = state.connectionMap[nodeId];
-            connections?.forEach((connection) => {
-              if (nodesToBeAllocatedMap[connection.toNode.nodeId]) {
-                connection.canBeAllocated = true;
-              }
-            });
-          }
+          changeConnectionType(nodeId, nodesToBeAllocatedMap, "canBeAllocated");
         });
-        state.treeUpdateOnHover = false;
       }
+
+      state.treeUpdateOnHover = false;
     },
 
     removeHighLight: (state) => {
       const nodesToBeAllocatedList = state.nodesToBeAllocated.list;
-      const nodesToBeDeallocated = state.nodesToBeDeallocated.list;
+      const nodesToBeDeallocatedList = state.nodesToBeDeallocated.list;
 
-      if (nodesToBeDeallocated.length > 0) {
-        nodesToBeDeallocated.forEach((nodeId) => {
+      if (nodesToBeDeallocatedList.length > 0) {
+        nodesToBeDeallocatedList.forEach((nodeId) => {
           const connections = state.connectionMap[nodeId];
           connections?.forEach((connection) => {
             connection.canBeUnallocated = false;
           });
         });
+        state.nodesToBeDeallocated = {
+          list: [],
+          map: {},
+        };
       }
 
       if (nodesToBeAllocatedList.length > 0) {
@@ -111,17 +115,11 @@ export const atlasTreeSlice = createSlice({
             connection.canBeAllocated = false;
           });
         });
+        state.nodesToBeAllocated = {
+          list: [],
+          map: {},
+        };
       }
-
-      state.nodesToBeAllocated = {
-        list: [],
-        map: {},
-      };
-      state.nodesToBeDeallocated = {
-        target: undefined,
-        list: [],
-        map: {},
-      };
     },
 
     getNodesToAllocate: (state, { payload }: { payload: string }) => {
@@ -180,7 +178,6 @@ export const atlasTreeSlice = createSlice({
         return { ...acc, [cur]: 1 };
       }, {});
       state.nodesToBeDeallocated = {
-        target,
         list: deallocateList,
         map: deallocateMap,
       };
@@ -191,7 +188,6 @@ export const atlasTreeSlice = createSlice({
     },
 
     updateTreeOnClick: (state) => {
-      const targetNodeToBeDeallocated = state.nodesToBeDeallocated.target;
       const nodesToBeDeallocatedList = state.nodesToBeDeallocated.list;
       const allocatedNodesList = Object.keys(state.allocatedNodes);
       const allocatedNodesState = state.allocatedNodes;
@@ -207,13 +203,14 @@ export const atlasTreeSlice = createSlice({
         allocatedNodesList.forEach((nodeId) => {
           // set new edge node
 
-          if (allocatedNodesState[nodeId][0] === targetNodeToBeDeallocated) {
+          if (allocatedNodesState[nodeId][0] === nodesToBeDeallocatedList[0]) {
             allocatedNodesState[nodeId] = [undefined];
           }
 
           const connections = state.connectionMap[nodeId];
           connections?.forEach((connection) => {
             connection.isSelected = false;
+            connection.canBeUnallocated = false;
           });
         });
 
@@ -237,7 +234,6 @@ export const atlasTreeSlice = createSlice({
         });
 
         state.nodesToBeDeallocated = {
-          target: undefined,
           list: [],
           map: {},
         };
