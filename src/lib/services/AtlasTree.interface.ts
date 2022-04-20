@@ -120,7 +120,7 @@ export declare namespace InternalAtlasTree {
 
     nodeIcon: NodeIcon;
     outlineIcon?: OutlineIcon;
-    groupBackground?: string;
+
     stats?: string[];
 
     groupX?: number;
@@ -129,23 +129,33 @@ export declare namespace InternalAtlasTree {
     y?: number;
     angle?: number;
 
-    backgroundOverride?: number;
-
     out: string[];
+    in: string[];
 
     isSelected: boolean;
     isHovered: boolean;
   }
 
+  export interface MasteryNode {
+    name: string;
+    nodeId: string;
+    groupId: string;
+    orbit: number;
+    orbitIndex: number;
+    nodeIcon: NodeIcon;
+    groupX?: number;
+    groupY?: number;
+    x?: number;
+    y?: number;
+    angle?: number;
+    stats?: string[];
+    backgroundOverride?: number;
+    groupBackground?: string;
+    isHighlighted: boolean;
+    isMastery?: boolean;
+  }
   export interface RootNode extends Node {
     nodeId: "29045";
-  }
-  export interface MasteryNode extends Node {
-    isMastery: boolean;
-  }
-
-  export interface NotableNode extends Node {
-    isNotable: boolean;
   }
 
   export interface Connection {
@@ -154,12 +164,15 @@ export declare namespace InternalAtlasTree {
     isCurved: boolean;
 
     isSelected: boolean;
+    canBeAllocated: boolean;
+    canBeUnallocated: boolean;
   }
 
   export interface Data {
     constants: Constants;
     connectionMap: Record<string, Connection[]>;
-    nodeMap: Record<string, Node | NotableNode | MasteryNode>;
+    nodeMap: Record<string, Node>;
+    masteryNodeMap: Record<string, MasteryNode>;
     skillSprites: GGGAtlasTree.SkillSprites;
   }
 }

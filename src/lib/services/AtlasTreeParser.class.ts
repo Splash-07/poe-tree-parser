@@ -1,12 +1,13 @@
 import { GGGAtlasTree, InternalAtlasTree } from "./AtlasTree.interface";
-import { isSkillNode } from "./AtlasTree.typeguards";
+import { isSkillNode, isTreeRoot } from "./AtlasTree.typeguards";
 
-export class AtlasTree {
+export class AtlasTreeParser {
   data: GGGAtlasTree.Data;
   skillSprites: GGGAtlasTree.SkillSprites;
   groupMap: Record<string, GGGAtlasTree.Group> = {};
   orbitDelta: InternalAtlasTree.OrbitDelta[][] = [];
   nodeMap: Record<string, InternalAtlasTree.Node> = {};
+  masteryNodeMap: Record<string, InternalAtlasTree.MasteryNode> = {};
   connectionMap: Record<string, InternalAtlasTree.Connection[]> = {};
 
   constructor(data: GGGAtlasTree.Data) {
@@ -19,13 +20,17 @@ export class AtlasTree {
 
     if (nodesInOrbit === 16) {
       // Every 30 and 45 degrees, per https://github.com/grindinggear/skilltree-export/blob/3.17.0/README.md
-      const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+      const angles = [
+        0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315,
+        330,
+      ];
       orbitAngles = [...angles];
     } else if (nodesInOrbit == 40) {
       // Every 10 and 45 degrees
       const angles = [
-        0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140, 150, 160, 170, 180, 190, 200, 210, 220,
-        225, 230, 240, 250, 260, 270, 280, 290, 300, 310, 315, 320, 330, 340, 350,
+        0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140,
+        150, 160, 170, 180, 190, 200, 210, 220, 225, 230, 240, 250, 260, 270,
+        280, 290, 300, 310, 315, 320, 330, 340, 350,
       ];
       orbitAngles = [...angles];
     } else {
@@ -49,7 +54,10 @@ export class AtlasTree {
       const deltaCords = [];
 
       for (let i = 0; i < nodeAngle.length; i++) {
-        const [x, y] = [Math.sin(nodeAngle[i]) * radius, Math.cos(nodeAngle[i]) * radius];
+        const [x, y] = [
+          Math.sin(nodeAngle[i]) * radius,
+          Math.cos(nodeAngle[i]) * radius,
+        ];
         deltaCords.push({ x, y: -y, angle: nodeAngle[i] }); // y negative is important,cuz sprite world y is negative
       }
       return deltaCords;
@@ -91,7 +99,12 @@ export class AtlasTree {
     groupBackground?: string;
   } {
     const { icon } = node;
-    const iconType = "isMastery" in node ? "mastery" : "isNotable" in node ? "notable" : "normal";
+    const iconType =
+      "isMastery" in node
+        ? "mastery"
+        : "isNotable" in node
+        ? "notable"
+        : "normal";
 
     const result = {
       nodeIcon: {
@@ -101,12 +114,19 @@ export class AtlasTree {
         },
         inactive: {
           filename: skillSprites[`${iconType}Inactive`][zoomLevel].filename,
-          cords: skillSprites[`${iconType}Inactive`][zoomLevel].coords[`${icon}`],
+          cords:
+            skillSprites[`${iconType}Inactive`][zoomLevel].coords[`${icon}`],
         },
       },
       outlineIcon: {
-        active: `${iconType === "notable" ? "NotableFrameAllocated" : "PSSkillFrameActive"}.png`,
-        inactive: `${iconType === "notable" ? "NotableFrameUnallocated" : "PSSkillFrame"}.png`,
+        active: `${
+          iconType === "notable"
+            ? "NotableFrameAllocated"
+            : "PSSkillFrameActive"
+        }.png`,
+        inactive: `${
+          iconType === "notable" ? "NotableFrameUnallocated" : "PSSkillFrame"
+        }.png`,
       },
     };
 
@@ -116,7 +136,10 @@ export class AtlasTree {
       if (orbits.length > 1) {
         const filteredOrbits = orbits.filter((orbit) => orbit <= 3);
         const lastOrbit = filteredOrbits[filteredOrbits.length - 1];
-        const bgId = lastOrbit === backgroundOverride ? lastOrbit : lastOrbit - backgroundOverride;
+        const bgId =
+          lastOrbit === backgroundOverride
+            ? lastOrbit
+            : lastOrbit - backgroundOverride;
         return {
           nodeIcon,
           groupBackground: `PSGroupBackground${bgId}.png`,
@@ -126,16 +149,37 @@ export class AtlasTree {
 
     return result;
   }
-  mapToInternalNode(node: GGGAtlasTree.Node, nodeId: string): InternalAtlasTree.Node {
-    const { nodeIcon, outlineIcon, groupBackground } = this.parseNodeIcon(node, this.skillSprites, 3);
-    const { icon, ...restNode } = node;
 
+  mapToInternalNode(
+    node: GGGAtlasTree.Node,
+    nodeId: string
+  ): InternalAtlasTree.Node | InternalAtlasTree.MasteryNode {
+    const { nodeIcon, outlineIcon, groupBackground } = this.parseNodeIcon(
+      node,
+      this.skillSprites,
+      3
+    );
+    const { icon, ...restNodeValues } = node;
+
+    // if mastery node
+    if ("isMastery" in node) {
+      return {
+        ...restNodeValues,
+        nodeIcon,
+        groupBackground,
+        nodeId,
+        name: node.name ?? "",
+        groupId: node.group?.toString() ?? null,
+        isHighlighted: false,
+      };
+    }
+    // if any other node
     return {
-      ...restNode,
+      ...restNodeValues,
       nodeIcon,
       outlineIcon,
-      groupBackground,
       nodeId,
+      in: node.in ?? [],
       out: node.out ?? [],
       name: node.name ?? "",
       groupId: node.group?.toString() ?? null,
@@ -145,7 +189,8 @@ export class AtlasTree {
   }
 
   handleNode(node: GGGAtlasTree.Node, nodeId: string) {
-    let result: InternalAtlasTree.Node = this.mapToInternalNode(node, nodeId);
+    let result: InternalAtlasTree.Node | InternalAtlasTree.MasteryNode =
+      this.mapToInternalNode(node, nodeId);
     if (isSkillNode(node) && node.group) {
       if (node.orbit !== undefined && node.orbitIndex !== undefined) {
         const orbitDelta = this.orbitDelta[node.orbit][node.orbitIndex];
@@ -165,19 +210,37 @@ export class AtlasTree {
     return result;
   }
 
-  parseNodes(): Record<string, InternalAtlasTree.Node> {
-    const nodes = Object.keys(this.data.nodes).map((nodeId) => {
-      const node = this.data.nodes[nodeId];
+  parseNodes() {
+    const masteryNodes: InternalAtlasTree.MasteryNode[] = [];
+    const nodes: InternalAtlasTree.Node[] = [];
 
-      return this.handleNode(node, nodeId);
+    Object.keys(this.data.nodes).forEach((nodeId) => {
+      const node = this.handleNode(this.data.nodes[nodeId], nodeId);
+      if (!isTreeRoot(node)) {
+        if ("isMastery" in node) masteryNodes.push(node);
+        else nodes.push(node as InternalAtlasTree.Node);
+      }
     });
-    return nodes.reduce(
+
+    const nodeMap = nodes.reduce(
       (acc, cur) => ({
         ...acc,
         [cur.nodeId]: cur,
       }),
       {}
     );
+    const masteryNodeMap = masteryNodes.reduce(
+      (acc, cur) => ({
+        ...acc,
+        [cur.nodeId]: cur,
+      }),
+      {}
+    );
+
+    return {
+      nodeMap,
+      masteryNodeMap,
+    };
   }
 
   parseConnections(): Record<string, InternalAtlasTree.Connection[]> {
@@ -192,24 +255,31 @@ export class AtlasTree {
           return;
         }
 
-        const isCurved = nodeOne.groupId === nodeTwo.groupId && nodeOne.orbit === nodeTwo.orbit;
+        const isCurved =
+          nodeOne.groupId === nodeTwo.groupId &&
+          nodeOne.orbit === nodeTwo.orbit;
         const nodes = [nodeOne, nodeTwo];
 
         nodes.sort((a, b) => {
-          if (Number.isInteger(a.orbitIndex) && Number.isInteger(b.orbitIndex)) {
+          if (
+            Number.isInteger(a.orbitIndex) &&
+            Number.isInteger(b.orbitIndex)
+          ) {
             return a.orbitIndex! < b.orbitIndex! ? -1 : 1;
           }
 
           return -1;
         });
 
-        // const [fromNode, toNode] = nodes
+        const [fromNode, toNode] = nodes;
 
         connections.push({
           fromNode: nodeOne,
           toNode: nodeTwo,
           isCurved,
           isSelected: false,
+          canBeAllocated: false,
+          canBeUnallocated: false,
         });
       });
     });
@@ -238,13 +308,15 @@ export class AtlasTree {
     };
 
     this.groupMap = this.parseGroups();
-    this.nodeMap = this.parseNodes();
+    const { nodeMap, masteryNodeMap } = this.parseNodes();
+    this.masteryNodeMap = masteryNodeMap;
+    this.nodeMap = nodeMap;
     this.connectionMap = this.parseConnections();
-
     return {
       constants,
       skillSprites: this.skillSprites,
       nodeMap: this.nodeMap,
+      masteryNodeMap: this.masteryNodeMap,
       connectionMap: this.connectionMap,
     };
   }
