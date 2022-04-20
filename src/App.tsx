@@ -1,5 +1,5 @@
 import { Provider } from "react-redux";
-import TreeStage from "./components/Tree/TreeStage";
+import TreeStage from "./components/TreeStage";
 import { store } from "./lib/store/store";
 import "./styles/global.css";
 function App() {

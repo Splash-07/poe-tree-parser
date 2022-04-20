@@ -31,3 +31,24 @@ export function getShortestPathMap(
     }, {}),
   };
 }
+
+export function getLineColor(
+  isSelected: boolean,
+  canBeAllocated: boolean,
+  canBeUnallocated: boolean
+) {
+  return canBeAllocated
+    ? 0x38a169
+    : canBeUnallocated
+    ? 0xe53e3e
+    : isSelected
+    ? 0x63b3ed
+    : 0x8f6c29;
+}
+export function getLineAlpha(
+  isSelected: boolean,
+  canBeAllocated: boolean,
+  canBeUnallocated: boolean
+) {
+  return canBeAllocated ? 1 : canBeUnallocated ? 1 : isSelected ? 1 : 0.4;
+}

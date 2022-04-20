@@ -1,5 +1,5 @@
 import { GGGAtlasTree, InternalAtlasTree } from "./AtlasTree.interface";
-import { isSkillNode } from "./AtlasTree.typeguards";
+import { isSkillNode, isTreeRoot } from "./AtlasTree.typeguards";
 
 export class AtlasTreeParser {
   data: GGGAtlasTree.Data;
@@ -7,6 +7,7 @@ export class AtlasTreeParser {
   groupMap: Record<string, GGGAtlasTree.Group> = {};
   orbitDelta: InternalAtlasTree.OrbitDelta[][] = [];
   nodeMap: Record<string, InternalAtlasTree.Node> = {};
+  masteryNodeMap: Record<string, InternalAtlasTree.MasteryNode> = {};
   connectionMap: Record<string, InternalAtlasTree.Connection[]> = {};
 
   constructor(data: GGGAtlasTree.Data) {
@@ -152,19 +153,31 @@ export class AtlasTreeParser {
   mapToInternalNode(
     node: GGGAtlasTree.Node,
     nodeId: string
-  ): InternalAtlasTree.Node {
+  ): InternalAtlasTree.Node | InternalAtlasTree.MasteryNode {
     const { nodeIcon, outlineIcon, groupBackground } = this.parseNodeIcon(
       node,
       this.skillSprites,
       3
     );
-    const { icon, ...restNode } = node;
+    const { icon, ...restNodeValues } = node;
 
+    // if mastery node
+    if ("isMastery" in node) {
+      return {
+        ...restNodeValues,
+        nodeIcon,
+        groupBackground,
+        nodeId,
+        name: node.name ?? "",
+        groupId: node.group?.toString() ?? null,
+        isHighlighted: false,
+      };
+    }
+    // if any other node
     return {
-      ...restNode,
+      ...restNodeValues,
       nodeIcon,
       outlineIcon,
-      groupBackground,
       nodeId,
       in: node.in ?? [],
       out: node.out ?? [],
@@ -176,7 +189,8 @@ export class AtlasTreeParser {
   }
 
   handleNode(node: GGGAtlasTree.Node, nodeId: string) {
-    let result: InternalAtlasTree.Node = this.mapToInternalNode(node, nodeId);
+    let result: InternalAtlasTree.Node | InternalAtlasTree.MasteryNode =
+      this.mapToInternalNode(node, nodeId);
     if (isSkillNode(node) && node.group) {
       if (node.orbit !== undefined && node.orbitIndex !== undefined) {
         const orbitDelta = this.orbitDelta[node.orbit][node.orbitIndex];
@@ -196,19 +210,37 @@ export class AtlasTreeParser {
     return result;
   }
 
-  parseNodes(): Record<string, InternalAtlasTree.Node> {
-    const nodes = Object.keys(this.data.nodes).map((nodeId) => {
-      const node = this.data.nodes[nodeId];
+  parseNodes() {
+    const masteryNodes: InternalAtlasTree.MasteryNode[] = [];
+    const nodes: InternalAtlasTree.Node[] = [];
 
-      return this.handleNode(node, nodeId);
+    Object.keys(this.data.nodes).forEach((nodeId) => {
+      const node = this.handleNode(this.data.nodes[nodeId], nodeId);
+      if (!isTreeRoot(node)) {
+        if ("isMastery" in node) masteryNodes.push(node);
+        else nodes.push(node as InternalAtlasTree.Node);
+      }
     });
-    return nodes.reduce(
+
+    const nodeMap = nodes.reduce(
       (acc, cur) => ({
         ...acc,
         [cur.nodeId]: cur,
       }),
       {}
     );
+    const masteryNodeMap = masteryNodes.reduce(
+      (acc, cur) => ({
+        ...acc,
+        [cur.nodeId]: cur,
+      }),
+      {}
+    );
+
+    return {
+      nodeMap,
+      masteryNodeMap,
+    };
   }
 
   parseConnections(): Record<string, InternalAtlasTree.Connection[]> {
@@ -276,12 +308,15 @@ export class AtlasTreeParser {
     };
 
     this.groupMap = this.parseGroups();
-    this.nodeMap = this.parseNodes();
+    const { nodeMap, masteryNodeMap } = this.parseNodes();
+    this.masteryNodeMap = masteryNodeMap;
+    this.nodeMap = nodeMap;
     this.connectionMap = this.parseConnections();
     return {
       constants,
       skillSprites: this.skillSprites,
       nodeMap: this.nodeMap,
+      masteryNodeMap: this.masteryNodeMap,
       connectionMap: this.connectionMap,
     };
   }

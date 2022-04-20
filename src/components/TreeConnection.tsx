@@ -2,7 +2,11 @@ import * as PIXI from "pixi.js";
 import { Graphics } from "@inlet/react-pixi";
 
 import React, { FC, memo, useCallback } from "react";
-import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
+import { InternalAtlasTree } from "../lib/services/AtlasTree.interface";
+import {
+  getLineAlpha,
+  getLineColor,
+} from "../lib/services/atlasTree.utilities";
 
 interface TreeConnectorProps {
   connection: InternalAtlasTree.Connection;
@@ -12,20 +16,9 @@ interface TreeConnectorProps {
 const DrawLineConnection = (connection: TreeConnectorProps["connection"]) => {
   const { fromNode, toNode, isSelected, canBeAllocated, canBeUnallocated } =
     connection;
-  const color = canBeAllocated
-    ? 0x38a169
-    : canBeUnallocated
-    ? 0xe53e3e
-    : isSelected
-    ? 0x63b3ed
-    : 0x8f6c29;
-  const alpha = canBeAllocated
-    ? 1
-    : canBeUnallocated
-    ? 1
-    : isSelected
-    ? 1
-    : 0.4;
+  const color = getLineColor(isSelected, canBeAllocated, canBeUnallocated);
+  const alpha = getLineAlpha(isSelected, canBeAllocated, canBeUnallocated);
+
   const draw = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
@@ -46,20 +39,8 @@ const DrawArcConnection = (
 ) => {
   const { fromNode, toNode, isSelected, canBeAllocated, canBeUnallocated } =
     connection;
-  const color = canBeAllocated
-    ? 0x38a169
-    : canBeUnallocated
-    ? 0xe53e3e
-    : isSelected
-    ? 0x63b3ed
-    : 0x8f6c29;
-  const alpha = canBeAllocated
-    ? 1
-    : canBeUnallocated
-    ? 1
-    : isSelected
-    ? 1
-    : 0.4;
+  const color = getLineColor(isSelected, canBeAllocated, canBeUnallocated);
+  const alpha = getLineAlpha(isSelected, canBeAllocated, canBeUnallocated);
   const orbitRadius = orbitRadii[fromNode.orbit!];
 
   let startAngle =
@@ -96,7 +77,6 @@ const DrawArcConnection = (
 };
 
 const TreeConnector: FC<TreeConnectorProps> = ({ connection, orbitRadii }) => {
-  console.log("rerender");
   return connection.isCurved
     ? DrawArcConnection(connection, orbitRadii)
     : DrawLineConnection(connection);

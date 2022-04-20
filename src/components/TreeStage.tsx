@@ -4,12 +4,12 @@ import Tree from "./Tree";
 import TreeViewport from "./TreeViewport";
 import { useState } from "react";
 import { Provider } from "react-redux";
-import { store } from "../../lib/store/store";
-import { parseTreeData } from "../../lib/parseTreeData";
+import { parseTreeData } from "../lib/services/parseTreeData";
+import { store } from "../lib/store/store";
 
 const TreeStage = () => {
-  const { nodeMap, constants, connectionMap } = parseTreeData();
-  // const { constants, nodeMap, connectionMap } = useAppSelector((state) => state.atlasTree);
+  // TODO: PARSE ONLY IN REDUX atlasTree.slice.ts
+  const { constants } = parseTreeData();
 
   const [stageOptions, setStageOptions] = useState({
     width: window.innerWidth,

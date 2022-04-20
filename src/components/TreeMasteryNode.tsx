@@ -1,12 +1,11 @@
 import { Container, Sprite, TilingSprite } from "@inlet/react-pixi";
 import React, { FC, memo } from "react";
-import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
+import { InternalAtlasTree } from "../lib/services/AtlasTree.interface";
 interface TreeMasteryNodeProps {
   node: InternalAtlasTree.MasteryNode;
 }
-// Cuz of zIndex layers it has to be separated component
 const TreeMasteryNode: FC<TreeMasteryNodeProps> = ({ node }) => {
-  const iconSrc = node.isSelected ? `/${node.nodeIcon?.active.filename}` : `/${node.nodeIcon?.inactive.filename}`;
+  const iconSrc = `/${node.nodeIcon?.inactive.filename}`;
   return (
     <Container x={node.x} y={node.y} anchor={0.5}>
       <Sprite image={`/${node.groupBackground}`} anchor={0.5} scale={2.6} />

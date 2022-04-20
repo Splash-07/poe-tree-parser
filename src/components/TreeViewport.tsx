@@ -2,7 +2,7 @@ import React from "react";
 import * as PIXI from "pixi.js";
 import { PixiComponent, useApp } from "@inlet/react-pixi";
 import { Viewport as PixiViewport } from "pixi-viewport";
-import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
+import { InternalAtlasTree } from "../lib/services/AtlasTree.interface";
 
 export interface ViewportProps {
   width: number;
@@ -39,7 +39,11 @@ const PixiComponentViewport = PixiComponent("Viewport", {
       maxScale: worldOptions.maxScale,
     };
     viewport
-      .animate({ time: 0, scale: 0.17, position: { x: worldOptions.posX, y: worldOptions.posY } })
+      .animate({
+        time: 0,
+        scale: 0.17,
+        position: { x: worldOptions.posX, y: worldOptions.posY },
+      })
       .drag()
       .pinch()
       .wheel()

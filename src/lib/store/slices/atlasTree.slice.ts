@@ -1,11 +1,14 @@
-import { createSlice, current } from "@reduxjs/toolkit";
-import { parseTreeData } from "../../parseTreeData";
-import { InternalAtlasTree } from "../../services/AtlasTreeParser/AtlasTree.interface";
-import { getShortestPathMap } from "../../services/AtlasTreeParser/atlasTree.utilities";
+import { createSlice } from "@reduxjs/toolkit";
+import { parseTreeData } from "../../services/parseTreeData";
+import { InternalAtlasTree } from "../../services/AtlasTree.interface";
+import { getShortestPathMap } from "../../services/atlasTree.utilities";
 
 export interface AtlasTreeState {
   rootNodeId: string;
+
   nodeMap: Record<string, InternalAtlasTree.Node>;
+  masteryNodeMap: Record<string, InternalAtlasTree.MasteryNode>;
+
   connectionMap: Record<string, InternalAtlasTree.Connection[]>;
   constants: InternalAtlasTree.Constants;
   treeUpdateOnClick: boolean;
@@ -20,12 +23,16 @@ export interface AtlasTreeState {
     map: Record<string, number>;
   };
 }
-const { nodeMap, constants, connectionMap } = parseTreeData();
+
+const { nodeMap, masteryNodeMap, constants, connectionMap } = parseTreeData();
+
 const initialState: AtlasTreeState = {
   rootNodeId: "29045",
   nodeMap,
+  masteryNodeMap,
   connectionMap,
   constants,
+
   treeUpdateOnClick: false,
   treeUpdateOnHover: false,
   allocatedNodes: { "29045": [] },
