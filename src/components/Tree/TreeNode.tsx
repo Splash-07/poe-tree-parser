@@ -3,24 +3,56 @@ import { TextStyle } from "pixi.js";
 import { FC, memo } from "react";
 import { useDispatch } from "react-redux";
 import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
-import { getShortestPathToNode, triggerTreeUpdate } from "../../lib/store/slices/atlasTree.slice";
+import {
+  allocateNodes,
+  // deallocateNodes,
+  getNodesToAllocate,
+  getNodesToDeallocate,
+  removeHighLight,
+  triggerTreeUpdateOnClick,
+  triggerTreeUpdateOnHover,
+} from "../../lib/store/slices/atlasTree.slice";
+import debounce from "lodash.debounce";
 
 interface TreeNodeProps {
-  node: InternalAtlasTree.Node | InternalAtlasTree.NotableNode | InternalAtlasTree.MasteryNode;
+  node:
+    | InternalAtlasTree.Node
+    | InternalAtlasTree.NotableNode
+    | InternalAtlasTree.MasteryNode;
 }
 const TreeNode: FC<TreeNodeProps> = ({ node }) => {
   const dispatch = useDispatch();
-  const iconSrc = node.isSelected ? `/${node.nodeIcon?.active.filename}` : `/${node.nodeIcon?.inactive.filename}`;
-  const outlineIconSrc = node.isSelected ? `/${node.outlineIcon?.active}` : `/${node.outlineIcon?.inactive}`;
+  const iconSrc = node.isSelected
+    ? `/${node.nodeIcon?.active.filename}`
+    : `/${node.nodeIcon?.inactive.filename}`;
+  const outlineIconSrc = node.isSelected
+    ? `/${node.outlineIcon?.active}`
+    : `/${node.outlineIcon?.inactive}`;
 
-  function handleClickOnNode(toNodeId: string) {
-    node.isSelected
-      ? dispatch(getShortestPathToNode({ toNodeId, action: "DEALLOCATE" }))
-      : dispatch(getShortestPathToNode({ toNodeId, action: "ALLOCATE" }));
+  const debouncedHandleMouseOverNode = debounce(
+    (node: InternalAtlasTree.Node) => handleMouseOverNode(node),
+    100
+  );
 
-    dispatch(triggerTreeUpdate());
+  function handleClickOnNode(node: InternalAtlasTree.Node) {
+    if (!node.isSelected) {
+      dispatch(allocateNodes());
+    }
+    dispatch(triggerTreeUpdateOnClick());
   }
 
+  function handleMouseOverNode(node: InternalAtlasTree.Node) {
+    node.isSelected
+      ? dispatch(getNodesToDeallocate(node.nodeId))
+      : dispatch(getNodesToAllocate(node.nodeId));
+
+    dispatch(triggerTreeUpdateOnHover());
+  }
+
+  function handleMouseOutNode() {
+    dispatch(removeHighLight());
+    debouncedHandleMouseOverNode.cancel();
+  }
   console.log("rerender");
   return (
     <Container sortableChildren={true} x={node.x} y={node.y}>
@@ -28,8 +60,12 @@ const TreeNode: FC<TreeNodeProps> = ({ node }) => {
         image={iconSrc}
         interactive={true}
         click={() => {
-          handleClickOnNode(node.nodeId);
+          handleClickOnNode(node);
         }}
+        mouseover={() => {
+          debouncedHandleMouseOverNode(node);
+        }}
+        mouseout={() => handleMouseOutNode()}
         cursor="pointer"
         anchor={0.5}
         scale={3}
@@ -40,7 +76,9 @@ const TreeNode: FC<TreeNodeProps> = ({ node }) => {
           y: -node.nodeIcon.inactive.cords.y,
         }}
       />
-      {node.outlineIcon && <Sprite image={outlineIconSrc} anchor={0.5} scale={2.7} />}
+      {node.outlineIcon && (
+        <Sprite image={outlineIconSrc} anchor={0.5} scale={2.7} />
+      )}
       <Text
         text={node.nodeId}
         style={

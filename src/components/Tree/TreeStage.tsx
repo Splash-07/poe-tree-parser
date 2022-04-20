@@ -3,7 +3,6 @@ import { Sprite, Stage, TilingSprite } from "@inlet/react-pixi";
 import Tree from "./Tree";
 import TreeViewport from "./TreeViewport";
 import { useState } from "react";
-import { useAppSelector } from "../../lib/hooks/store.hooks";
 import { Provider } from "react-redux";
 import { store } from "../../lib/store/store";
 import { parseTreeData } from "../../lib/parseTreeData";
@@ -25,7 +24,11 @@ const TreeStage = () => {
   };
 
   return (
-    <Stage width={stageOptions.width} height={stageOptions.height} options={{ antialias: true }}>
+    <Stage
+      width={stageOptions.width}
+      height={stageOptions.height}
+      options={{ antialias: true }}
+    >
       <Provider store={store}>
         <TreeContainerFilter
           adjust={{ saturation: 1, brightness: 1, gamma: 1, contrast: 0.95 }}

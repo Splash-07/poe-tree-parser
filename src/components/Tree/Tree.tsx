@@ -5,14 +5,26 @@ import { MemoisedTreeNode } from "./TreeNode";
 import { MemoisedTreeConnector } from "./TreeConnection";
 
 import { InternalAtlasTree } from "../../lib/services/AtlasTreeParser/AtlasTree.interface";
-import { isMasteryNode, isRootNode } from "../../lib/services/AtlasTreeParser/AtlasTree.typeguards";
-import { useAppDispatch, useAppSelector } from "../../lib/hooks/store.hooks";
-import { updateTreeState } from "../../lib/store/slices/atlasTree.slice";
+import {
+  isMasteryNode,
+  isRootNode,
+} from "../../lib/services/AtlasTreeParser/AtlasTree.typeguards";
+import { useAppDispatch, useAppSelector } from "../../lib/hooks/storeHooks";
+import {
+  triggerTreeUpdateOnHover,
+  updateTreeOnClick,
+  updateTreeOnHover,
+} from "../../lib/store/slices/atlasTree.slice";
+// import { updateTreeState } from "../../lib/store/slices/atlasTree.slice";
 
 const Tree = () => {
-  const { nodeMap, connectionMap, constants, treeUpdate, shortPathNodeList } = useAppSelector(
-    (state) => state.atlasTree
-  );
+  const {
+    nodeMap,
+    connectionMap,
+    constants,
+    treeUpdateOnHover,
+    treeUpdateOnClick,
+  } = useAppSelector((state) => state.atlasTree);
   const dispatch = useAppDispatch();
 
   const shouldRenderNode = (node: InternalAtlasTree.Node) => {
@@ -23,7 +35,10 @@ const Tree = () => {
     return true;
   };
 
-  const shouldRenderConnection = ({ fromNode, toNode }: InternalAtlasTree.Connection) => {
+  const shouldRenderConnection = ({
+    fromNode,
+    toNode,
+  }: InternalAtlasTree.Connection) => {
     if (!shouldRenderNode(fromNode) || !shouldRenderNode(toNode)) {
       return false;
     }
@@ -34,19 +49,27 @@ const Tree = () => {
 
     return true;
   };
+  useEffect(() => {
+    if (treeUpdateOnHover === true) {
+      dispatch(updateTreeOnHover());
+    }
+  }, [treeUpdateOnHover, dispatch]);
 
   useEffect(() => {
-    if (treeUpdate === true) {
-      dispatch(updateTreeState());
+    if (treeUpdateOnClick === true) {
+      dispatch(updateTreeOnClick());
     }
-  }, [treeUpdate, dispatch]);
+  }, [treeUpdateOnClick, dispatch]);
 
   return (
     <Container sortableChildren={true}>
       {/* Mastery nodes rendering */}
       {Object.values(nodeMap).map(
         (node, index) =>
-          node.nodeId !== "root" && isMasteryNode(node) && <MemoisedTreeMasteryNode key={index} node={node} />
+          node.nodeId !== "root" &&
+          isMasteryNode(node) && (
+            <MemoisedTreeMasteryNode key={index} node={node} />
+          )
       )}
       {/* Connections rendering */}
       {Object.values(connectionMap).map((connectionList, indexOne) => {

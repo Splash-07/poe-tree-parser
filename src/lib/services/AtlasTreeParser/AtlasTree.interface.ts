@@ -155,6 +155,8 @@ export declare namespace InternalAtlasTree {
     isCurved: boolean;
 
     isSelected: boolean;
+    canBeAllocated: boolean;
+    canBeUnallocated: boolean;
   }
 
   export interface Data {

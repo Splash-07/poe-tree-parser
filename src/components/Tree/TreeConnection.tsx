@@ -10,13 +10,24 @@ interface TreeConnectorProps {
 }
 
 const DrawLineConnection = (connection: TreeConnectorProps["connection"]) => {
-  const { fromNode, toNode, isSelected } = connection;
-  const color = isSelected ? 0xffffff : 0x8f6c29;
-  const alpha = isSelected ? 1 : 0.4;
+  const { fromNode, toNode, isSelected, canBeAllocated, canBeUnallocated } =
+    connection;
+  const color = canBeAllocated
+    ? 0x276749
+    : canBeUnallocated
+    ? 0xc53030
+    : 0x8f6c29;
+  const alpha = canBeAllocated
+    ? 0.4
+    : canBeUnallocated
+    ? 0.4
+    : isSelected
+    ? 1
+    : 0.4;
   const draw = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
-      g.lineStyle(16, color, alpha);
+      g.lineStyle(20, color, alpha);
       g.moveTo(fromNode.x!, fromNode.y!);
       g.lineTo(toNode.x!, toNode.y!);
       g.endFill();
@@ -27,13 +38,30 @@ const DrawLineConnection = (connection: TreeConnectorProps["connection"]) => {
   return <Graphics draw={draw} />;
 };
 
-const DrawArcConnection = (connection: TreeConnectorProps["connection"], orbitRadii: number[]) => {
-  const { fromNode, toNode, isSelected } = connection;
-  const color = isSelected ? 0xffffff : 0x8f6c29;
-  const alpha = isSelected ? 1 : 0.4;
+const DrawArcConnection = (
+  connection: TreeConnectorProps["connection"],
+  orbitRadii: number[]
+) => {
+  const { fromNode, toNode, isSelected, canBeAllocated, canBeUnallocated } =
+    connection;
+  const color = canBeAllocated
+    ? 0x276749
+    : canBeUnallocated
+    ? 0xc53030
+    : 0x8f6c29;
+  const alpha = canBeAllocated
+    ? 0.4
+    : canBeUnallocated
+    ? 0.4
+    : isSelected
+    ? 1
+    : 0.4;
   const orbitRadius = orbitRadii[fromNode.orbit!];
-  let startAngle = fromNode.angle! < toNode.angle! ? fromNode.angle : toNode.angle;
-  let endAngle = fromNode.angle! < toNode.angle! ? toNode.angle : fromNode.angle;
+
+  let startAngle =
+    fromNode.angle! < toNode.angle! ? fromNode.angle : toNode.angle;
+  let endAngle =
+    fromNode.angle! < toNode.angle! ? toNode.angle : fromNode.angle;
   const delta = endAngle! - startAngle!;
   if (delta >= Math.PI) {
     const c = 2 * Math.PI - delta;
@@ -46,8 +74,15 @@ const DrawArcConnection = (connection: TreeConnectorProps["connection"], orbitRa
   const draw = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
-      g.lineStyle(16, color, alpha);
-      g.arc(fromNode.groupX!, fromNode.groupY!, orbitRadius, startAngle!, endAngle!, false);
+      g.lineStyle(20, color, alpha);
+      g.arc(
+        fromNode.groupX!,
+        fromNode.groupY!,
+        orbitRadius,
+        startAngle!,
+        endAngle!,
+        false
+      );
       g.endFill();
     },
     [color, alpha]
@@ -57,7 +92,10 @@ const DrawArcConnection = (connection: TreeConnectorProps["connection"], orbitRa
 };
 
 const TreeConnector: FC<TreeConnectorProps> = ({ connection, orbitRadii }) => {
-  return connection.isCurved ? DrawArcConnection(connection, orbitRadii) : DrawLineConnection(connection);
+  console.log("rerender");
+  return connection.isCurved
+    ? DrawArcConnection(connection, orbitRadii)
+    : DrawLineConnection(connection);
 };
 
 export const MemoisedTreeConnector = memo(TreeConnector);
