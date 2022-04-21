@@ -1,6 +1,6 @@
 # POE Atlas tree parser
 
-Parsing GGG's json file to internal and rendring it with PIXI.js (not the best choice :D)
+Parsing GGG's json file and rendring it with PIXI.js (not the best choice :D)
 
 # Important
 
